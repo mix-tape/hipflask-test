@@ -21,10 +21,8 @@ var gulp = require('gulp'),
 // --------------------------------------------------------------------------
 
 var bowerrc = JSON.parse(fs.readFileSync('.bowerrc', 'utf8'))
-var secrets = JSON.parse(fs.readFileSync('../../../secrets.json', 'utf8'))
 
 var config = {
-  url: secrets.development.url,
   styles: './assets/styles',
   scripts: './assets/scripts',
   images: './assets/images',
@@ -38,6 +36,11 @@ var config = {
 // --------------------------------------------------------------------------
 
 gulp.task('browser-sync', () => {
+
+  // Load development URL from secrets
+
+  var secrets = JSON.parse(fs.readFileSync('../../../secrets.json', 'utf8'))
+  config.url = secrets.development.url
 
   // Watch these files and trigger reload
 
@@ -125,7 +128,7 @@ gulp.task('styles', () => {
     .pipe( plugins.rename('styles.css') )
     .pipe( plugins.sourcemaps.write('./') )
     .pipe( gulp.dest( config.styles ) )
-    .pipe( browserSync.stream( { match: '**/*.css' } ) )
+    .pipe( browserSync.reload({stream:true}) )
 })
 
 
@@ -168,9 +171,10 @@ gulp.task('scripts', () => {
   return gulp.src( scripts )
     .pipe( plugins.plumber() )
     .pipe( plugins.sourcemaps.init() )
-    // .pipe( plugins.babel({
-      // presets: ['latest']
-    // }))
+    .pipe( plugins.babel({
+      presets: ['latest']
+    }))
+    .pipe( plugins.order( ['*jquery.js*', '*angular.js*', 'init.js'] ) )
     .pipe( plugins.concat('global.js') )
     .pipe( plugins.sourcemaps.write( '.' ) )
     .pipe( gulp.dest( config.scripts ) )
